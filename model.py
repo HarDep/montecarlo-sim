@@ -56,17 +56,48 @@ class Model(IModel):
     # para sacar un numero pseudorandom lo que hacen es:
     # number = self.get_pseudorandom_number()
 
-    def generate_teams(self): #genrar los dos equipos
-        pass
+    def generate_teams(self): 
+        team1 = Team(name="Team A")
+        team2 = Team(name="Team B")
+        return [team1, team2]
 
     def generate_player(self, team, name):
-        #generar un jugador (genero y resisitencia de manera pseudorandom)
-        pass
-
-    def generate_players_luck_values(self): #usar self.players
-        #generar la suerte de los jugadores, y retornar los dos juagdores de cada equipo con mas suerte
-        pass
+       if self.get_pseudorandom_number() < 0.5:
+           is_male = True
+       else:
+           is_male = False    
+       original_endurance = round(30 + ( (40 - 30)* self.get_pseudorandom_number()))
+       experience = 10
+       player = Player(name,team, is_male, original_endurance, experience)
+       return  player
     
+    
+   
+        
+    def generate_players_luck_values(self): 
+      players_luck = []
+      for player in self.players:
+         luck_value = 1 + ((3 - 1) * self.get_pseudorandom_number())
+         players_luck.append({"value": luck_value, "player": player}) 
+
+   
+      team_a_players = [player for player in players_luck if player["player"].team.name == "Team A"]
+      team_b_players = [player for player in players_luck if player["player"].team.name == "Team B"]
+
+      team_a_players.sort(key=lambda p: p["value"], reverse=True)
+      team_b_players.sort(key=lambda p: p["value"], reverse=True)
+
+ 
+      top_lucky_player_team_a = team_a_players[0] 
+      top_lucky_player_team_b = team_b_players[0] 
+      top_lucky_players = [
+          LuckValue(top_lucky_player_team_a["player"], top_lucky_player_team_a["value"]), 
+          LuckValue(top_lucky_player_team_b["player"], top_lucky_player_team_b["value"])
+    ]
+
+      return top_lucky_players
+
+   
     def generate_shots_and_endurance_values(self, luck_values, rounds): #usar los endurance_values y la info del player de cada endurance_value
         endurance_values = [] # calcular los endurance_values: resistencia en jugadores menos 1 o 2 (excepto la primera ronda ya que se usa la resistencia original)
         #si tiene 9 puntos de experiencia mas solo es 1 menos (verificarlo con ganador de rondas anteriores)
