@@ -117,11 +117,7 @@ class Model(IModel):
             final_winner_team = self.teams[1]
         for player in self.players:
             if player.team.name == final_winner_team.name:
-                final_players_win_points.append({"player":player.name, "points":player})
-         # Accedes directamente a cada objeto Game
-
-        # calcular el equipo ganador de todos los juegos
-        # retornar objeto { team: x, players_points: [{ player: x, points: x },...] }
+                final_players_win_points.append({"player":player.name, "points":player.total_points})
         return {"team":final_winner_team, "player_points": final_players_win_points}
 
     def calculate_winner_gender_per_game(self): #usar self.games *?
@@ -130,7 +126,6 @@ class Model(IModel):
         count_win = 0
         gender_win = ''
         for game in self.games:
-            #winner team es el nombre, o el objeto team?
             if game.winner_player.is_male:
                 count_wins_male += 1
             else:
@@ -149,7 +144,22 @@ class Model(IModel):
         
 
     def calculate_winner_gender_total(self): #usar self.games
-        pass
+        male_wins = 0
+        female_wins = 0
+        for game in self.games:
+            for round_game in game.rounds:
+                winner_player = round_game.winner_player
+                if winner_player.is_male:
+                    male_wins += 1
+                else:
+                    female_wins += 1
+        winner_gender = "Male" if male_wins > female_wins else "Female"
+        return {
+            "gender": winner_gender,
+            "total_rounds_won": {"Male": male_wins, "Female": female_wins}
+            }
+    
+
         # calcular el genero ganador en total
         # retornar objeto { gender: x, amount_wins: x }
 
