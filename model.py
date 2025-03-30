@@ -55,7 +55,7 @@ class Model(IModel):
 
     # para sacar un numero pseudorandom lo que hacen es:
     # number = self.get_pseudorandom_number()
-
+    #1
     def generate_teams(self): #genrar los dos equipos
         pass
 
@@ -77,7 +77,7 @@ class Model(IModel):
         # reducir los endurance values de cada jugador en cada tiro
         # verificar otras restricciones
         pass
-
+        #1h
     def calculate_winner(self, shots): #usar los shots
         # no tener en cuenta en jugador ganador los lanzamientos de suerte
         # no tener en cuenta en equipo ganador los lanzamientos de extra indivuales
@@ -101,27 +101,71 @@ class Model(IModel):
         # retornar objeto { player: x, amount_experienced: x }
         pass
 
+    ##
+
     def calculate_team_winner(self): #usar self.games
+        count_wins_team_a = 0
+        count_wins_team_b = 0
+        final_winner_team: Team = None
+        final_players_win_points:list = []
+        for game in self.games:
+            count_wins_team_a += game.winner_team.name == 'Team A'
+            count_wins_team_b += game.winner_team.name  == 'Team B'
+        if count_wins_team_a > count_wins_team_b:
+            final_winner_team = self.teams[0]
+        else: 
+            final_winner_team = self.teams[1]
+        for player in self.players:
+            if player.team.name == final_winner_team.name:
+                final_players_win_points.append({"player":player.name, "points":player})
+         # Accedes directamente a cada objeto Game
+
         # calcular el equipo ganador de todos los juegos
         # retornar objeto { team: x, players_points: [{ player: x, points: x },...] }
-        pass
+        return {"team":final_winner_team, "player_points": final_players_win_points}
 
     def calculate_winner_gender_per_game(self): #usar self.games *?
+        count_wins_male = 0
+        count_wins_female = 0
+        count_win = 0
+        gender_win = ''
+        for game in self.games:
+            #winner team es el nombre, o el objeto team?
+            if game.winner_player.is_male:
+                count_wins_male += 1
+            else:
+                count_wins_female +=1
+        if count_wins_male > count_wins_female:
+            gender_win = 'Hombres'
+            count_win = count_wins_male
+        else:
+            gender_win = 'Mujeres'
+            count_win = count_wins_female
+        return {"gender": gender_win  , "amount_wins":count_win }
+        
         # calcular el genero ganador por juego
         # creo que es con contando el genero mas victorioso en cada juego, y ver cual es el que se repite mas
         # retornar objeto { gender: x, amount_wins: x }
-        pass
+        
 
     def calculate_winner_gender_total(self): #usar self.games
+        pass
         # calcular el genero ganador en total
         # retornar objeto { gender: x, amount_wins: x }
-        pass
 
     def calculate_points_vs_games_per_player(self): #usar self.games
+        players_with_points: list = [{"player": player, "points": []} for player in self.players]
+        for game in self.games:
+            game_points = {player.name: 0 for player in self.players}
+            for round_game in game.rounds:
+                for shot in round_game.shots:
+                    game_points[shot.player.name] += shot.score
+            for player_points in players_with_points:
+                player_name = player_points["player"].name
+                player_points["points"].append(game_points.get(player_name, 0))
         # calcular los puntos de cada jugador por juego
-        # retornar objeto [{ player: x, values: { games: [1, 2,...], points: [x, x,...] } },...]
-        pass
-
+        # retornar objeto [{ player: x, points: [x, x,...]}]
+        return players_with_points
     def get_pseudorandom_number(self):
         number = self.numbers[self.current_number]
         self.current_number += 1
