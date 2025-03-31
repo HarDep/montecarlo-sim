@@ -122,17 +122,23 @@ class Model(IModel):
         pass
 
     def calculate_luckiest_player_per_games(self): #usar self.games *?
-        # calcular el jugador con mas suerte para cada juego
-        # creo que es con contando game.luckiest_player
-        # retornar objeto { player: x, amount_luck: x }
-        pass
+        luck_counts = {}
+        for game in self.games:
+            luckiest_player = game.luckiest_player
+            luck_counts[luckiest_player] += 1
+        luckiest_player_overall = max(luck_counts, key=luck_counts.get)
+        return {
+            "player": luckiest_player_overall,
+            "amount_luck": luck_counts[luckiest_player_overall]
+        }
 
     def calculate_more_experienced_player(self): #usar self.players
-        # calcular el jugador con mas experiencia al final de todos los juegos
-        # retornar objeto { player: x, amount_experienced: x }
-        pass
+        most_experienced_player = max(self.players, key=lambda player: player.experience)
+        return {
+            "player": most_experienced_player,
+            "amount_experienced": most_experienced_player.experience
+        }
 
-    ##
 
     def calculate_team_winner(self): #usar self.games
         count_wins_team_a = 0
