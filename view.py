@@ -51,7 +51,7 @@ class View(tk.Tk, IView):
         self.presenter : IPresenter = None
         self.load_frame = None
         self.title("Aplicación")
-        self.geometry("700x500")
+        self.geometry("800x600")
         self.configure(bg="#f0f0f0")
         self.update_idletasks()
         self.geometry("+{}+{}".format(int(self.winfo_screenwidth()/2 - self.winfo_width()/2), int(self.winfo_screenheight()/2 - self.winfo_height()/2)))

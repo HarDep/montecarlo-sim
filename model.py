@@ -292,7 +292,7 @@ class Model(IModel):
                     male_wins += 1
                 else:
                     female_wins += 1
-        winner_gender = "Male" if male_wins > female_wins else "Female"
+        winner_gender = "Hombres" if male_wins > female_wins else "Mujeres"
         return {
             "gender": winner_gender,
             "total_rounds_won": max(male_wins, female_wins)
