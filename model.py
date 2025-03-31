@@ -26,12 +26,12 @@ class Model(IModel):
         self.players : list[Player] = []
         for team in self.teams:
             for i in range(PLAYERS_PER_TEAM):
-                self.players.append(self.generate_player(team, f"Jugador {team.name} {i+1}"))
+                self.players.append(self.generate_player(team, f"Jugador {i+1} {team.name}"))
         self.games : list[Game] = []
         for i in range(GAMES_AMOUNT):
             rounds : list[Round] = []
             for j in range(ROUNDS_PER_GAME):
-                luck_values = self.generate_players_luck_values(self.players)
+                luck_values = self.generate_players_luck_values()
                 shots, endurance_values = self.generate_shots_and_endurance_values(luck_values, rounds)
                 winner_player, winner_team = self.calculate_winner(shots)
                 rounds.append(Round(j+1,shots, luck_values, endurance_values, winner_player, winner_team))
@@ -151,7 +151,7 @@ class Model(IModel):
             if len(won_list) < 3:
                 endurance = last_endurance.value - (1 if self.get_pseudorandom_number() <= 0.5 else 2)
             else:
-                rounds_dif = rounds[len(rounds) - 1].number - won_list[len(won_list) - 1].number
+                rounds_dif = rounds[len(rounds) - 1].round_number - won_list[len(won_list) - 1].round_number
                 if rounds_dif <= 2:
                     endurance = last_endurance.value - 1
                 else:
@@ -206,18 +206,27 @@ class Model(IModel):
         max_tm_name = "Team A" if team_a_points > team_b_points else "Team B"
         winner_team = list(filter(lambda tm: tm.name == max_tm_name, self.teams))[0]
         rds_winners = []
+        lks_winners = []
         for round in rounds:
+            for luck_value in round.luck_values:
+                if luck_value.player.name in [lk_w['player'].name for lk_w in lks_winners]:
+                    list(filter(lambda lk_w: lk_w['player'].name == luck_value.player.name, lks_winners))[0]['amount'] += 1
+                else:
+                    lks_winners.append({"player": luck_value.player, "amount": 1})
             if round.winner_player.name in [rd_w['player'].name for rd_w in rds_winners]:
                 list(filter(lambda rd_w: rd_w['player'].name == round.winner_player.name, rds_winners))[0]['amount'] += 1
             else:
                 rds_winners.append({"player": round.winner_player, "amount": 1})
         winner_player = list(filter(lambda rd_w: rd_w['amount'] == max([rd_w['amount'] for rd_w in rds_winners]), rds_winners))[0]['player']
-        return winner_player, winner_team
+        luckiest_player = list(filter(lambda lk_w: lk_w['amount'] == max([lk_w['amount'] for lk_w in lks_winners]), lks_winners))[0]['player']
+        return winner_player, winner_team, luckiest_player
 
     def calculate_luckiest_player_per_games(self): #usar self.games *?
         luck_counts = {}
         for game in self.games:
             luckiest_player = game.luckiest_player
+            if luck_counts.get(luckiest_player) == None:
+                luck_counts[luckiest_player] = 0
             luck_counts[luckiest_player] += 1
         luckiest_player_overall = max(luck_counts, key=luck_counts.get)
         return {
@@ -286,7 +295,7 @@ class Model(IModel):
         winner_gender = "Male" if male_wins > female_wins else "Female"
         return {
             "gender": winner_gender,
-            "total_rounds_won": {"Male": male_wins, "Female": female_wins}
+            "total_rounds_won": max(male_wins, female_wins)
             }
     
 
@@ -312,8 +321,8 @@ class Model(IModel):
         return number
 
     def generate_sim_numbers(self):
-        self.numbers = generate_numbers(self.nums_configurations[self.nums_index]['conf1']).extend(
-            generate_numbers(self.nums_configurations[self.nums_index]['conf2']))
+        self.numbers = generate_numbers(self.nums_configurations[self.nums_index]['conf1'])
+        self.numbers.extend(generate_numbers(self.nums_configurations[self.nums_index]['conf2']))
         self.change_index()
         while not test_numbers(self.numbers):
             self.numbers = generate_numbers(self.nums_configurations[self.nums_index]['conf1']).extend(

@@ -103,18 +103,20 @@ class View(tk.Tk, IView):
         tk.Label(grid_frame, text=f"{results['winner_gender_per_game']['gender']} - {results['winner_gender_per_game']['amount_wins']} veces", 
                  font=("Arial", 15)).grid(row=2, column=1)
         tk.Label(grid_frame, text="Genero mas ganador en total:", font=("Arial", 15)).grid(row=3, column=0)
-        tk.Label(grid_frame, text=f"{results['winner_gender_total']['gender']} - {results['winner_gender_total']['amount_wins']} veces", 
+        tk.Label(grid_frame, text=f"{results['winner_gender_total']['gender']} - {results['winner_gender_total']['total_rounds_won']} veces", 
                  font=("Arial", 15)).grid(row=3, column=1)
         tk.Label(scrollable_frame, text=f"Equipo ganador: {results['winner_team_total']['team'].name}", font=("Arial", 15)).pack(pady=10)
-        for player_points in results['winner_team_total']['players_points']:
-            tk.Label(scrollable_frame, text=f"{player_points['player'].name} - {player_points['points']} puntos", font=("Arial", 12)).pack(pady=5)
+        for player_points in results['winner_team_total']['player_points']:
+            tk.Label(scrollable_frame, text=f"{player_points['player']} - {player_points['points']} puntos", font=("Arial", 12)).pack(pady=5)
         tk.Label(scrollable_frame, text=f"Graficas de jugador vs juegos:", font=("Arial", 15)).pack(pady=10)
         grid2_frame = tk.Frame(scrollable_frame)
         grid2_frame.pack(fill=tk.BOTH, expand=True)
         row, column = 0, 0
+        games = [i for i in range(1, 10000+1)]
         for player_vs_game in results['points_vs_games_per_player']:
+            data ={"points": player_vs_game['points'], "games": games }
             tk.Button(grid2_frame, text=f"{player_vs_game['player'].name}", 
-                command=lambda: self.show_graphics(player_vs_game['values'])).grid(row=row, column=column)
+                command=lambda: self.show_graphics(data)).grid(row=row, column=column)
             column += 1
             if column == 5:
                 row += 1
@@ -142,7 +144,7 @@ class View(tk.Tk, IView):
         plt.scatter(data['games'], data['points'], color='gray')
         plt.xlabel('Juegos')
         plt.ylabel('Puntos')
-        plt.title(f'Grafica de {data["player"].name}')
+        plt.title('Grafica de jugador')
         plt.show()
 
 if __name__ == "__main__":
