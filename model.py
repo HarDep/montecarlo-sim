@@ -176,17 +176,43 @@ class Model(IModel):
             return 8
         else: return 0
 
-    def calculate_winner(self, shots): #usar los shots
-        # no tener en cuenta en jugador ganador los lanzamientos de suerte
-        # no tener en cuenta en equipo ganador los lanzamientos de extra indivuales
-        #calcular el ganador de la ronda y el equipo ganador
-        # acutualizar experiencia de ganador en self.players
-        pass
+    def calculate_winner(self, shots:list[Shot]):
+        points_total_rd = [{"player":player, "points": 0} for player in self.players]
+        for shot in shots:
+            team_a_points = 0
+            team_b_points = 0
+            if shot.player.team.name == "Team A" and (shot.type == "NS" or shot.type == "LS"):
+                team_a_points += shot.score
+            if shot.player.team.name == "Team B" and (shot.type == "NS" or shot.type == "LS"):
+                team_b_points += shot.score
+            points_total_rd[self.players.index(shot.player)]["points"] += shot.score if shot.type == "NS" or shot.type == "ES" else 0
+        winner_player = list(filter(lambda value: value["points"] == max([pts["points"] for pts in points_total_rd]), points_total_rd))[0]["player"]
+        winner_team = None
+        if team_a_points != team_b_points:
+            max_tm_name = "Team A" if team_a_points > team_b_points else "Team B"
+            winner_team = list(filter(lambda tm: tm.name == max_tm_name, self.teams))[0]
+        list(filter(lambda player: player.name == winner_player.name, self.players))[0].experience += 3
+        return winner_player, winner_team
 
-    def calculate_game_winner(self, rounds): #usar los rounds
-        #calcular el equipo ganador del juego y el jugador ganador del juego
-        #acutualizar experiencia de ganador en self.players
-        pass
+    def calculate_game_winner(self, rounds:list[Round]):
+        shots = [shot for round in rounds for shot in round.shots]
+        for shot in shots:
+            team_a_points = 0
+            team_b_points = 0
+            if shot.player.team.name == "Team A" and (shot.type == "NS" or shot.type == "LS"):
+                team_a_points += shot.score
+            if shot.player.team.name == "Team B" and (shot.type == "NS" or shot.type == "LS"):
+                team_b_points += shot.score
+        max_tm_name = "Team A" if team_a_points > team_b_points else "Team B"
+        winner_team = list(filter(lambda tm: tm.name == max_tm_name, self.teams))[0]
+        rds_winners = []
+        for round in rounds:
+            if round.winner_player.name in [rd_w['player'].name for rd_w in rds_winners]:
+                list(filter(lambda rd_w: rd_w['player'].name == round.winner_player.name, rds_winners))[0]['amount'] += 1
+            else:
+                rds_winners.append({"player": round.winner_player, "amount": 1})
+        winner_player = list(filter(lambda rd_w: rd_w['amount'] == max([rd_w['amount'] for rd_w in rds_winners]), rds_winners))[0]['player']
+        return winner_player, winner_team
 
     def calculate_luckiest_player_per_games(self): #usar self.games *?
         luck_counts = {}
