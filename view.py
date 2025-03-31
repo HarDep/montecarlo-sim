@@ -112,7 +112,7 @@ class View(tk.Tk, IView):
         grid2_frame = tk.Frame(scrollable_frame)
         grid2_frame.pack(fill=tk.BOTH, expand=True)
         row, column = 0, 0
-        games = [i for i in range(1, 10000+1)]
+        games = [i for i in range(1, 20000+1)]
         for player_vs_game in results['points_vs_games_per_player']:
             data ={"points": player_vs_game['points'], "games": games }
             tk.Button(grid2_frame, text=f"{player_vs_game['player'].name}", 

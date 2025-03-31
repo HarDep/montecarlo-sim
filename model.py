@@ -4,7 +4,7 @@ from numbs_aux import generate_numbers, test_numbers
 from data_models import *
 from intefaces import IPresenter
 
-GAMES_AMOUNT = 10000
+GAMES_AMOUNT = 20000
 PLAYERS_PER_TEAM = 5
 ROUNDS_PER_GAME = 10
 
@@ -325,8 +325,8 @@ class Model(IModel):
         self.numbers.extend(generate_numbers(self.nums_configurations[self.nums_index]['conf2']))
         self.change_index()
         while not test_numbers(self.numbers):
-            self.numbers = generate_numbers(self.nums_configurations[self.nums_index]['conf1']).extend(
-                generate_numbers(self.nums_configurations[self.nums_index]['conf2']))
+            self.numbers = generate_numbers(self.nums_configurations[self.nums_index]['conf1'])
+            self.numbers.extend(generate_numbers(self.nums_configurations[self.nums_index]['conf2']))
             self.change_index()
 
     def load_configurations(self):
