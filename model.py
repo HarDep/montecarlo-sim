@@ -71,44 +71,111 @@ class Model(IModel):
        player = Player(name,team, is_male, original_endurance, experience)
        return  player
     
-    
-   
-        
     def generate_players_luck_values(self): 
       players_luck = []
       for player in self.players:
          luck_value = 1 + ((3 - 1) * self.get_pseudorandom_number())
          players_luck.append({"value": luck_value, "player": player}) 
-
-   
       team_a_players = [player for player in players_luck if player["player"].team.name == "Team A"]
       team_b_players = [player for player in players_luck if player["player"].team.name == "Team B"]
-
       team_a_players.sort(key=lambda p: p["value"], reverse=True)
       team_b_players.sort(key=lambda p: p["value"], reverse=True)
-
- 
       top_lucky_player_team_a = team_a_players[0] 
       top_lucky_player_team_b = team_b_players[0] 
       top_lucky_players = [
           LuckValue(top_lucky_player_team_a["player"], top_lucky_player_team_a["value"]), 
           LuckValue(top_lucky_player_team_b["player"], top_lucky_player_team_b["value"])
-    ]
-
+        ]
       return top_lucky_players
-
    
-    def generate_shots_and_endurance_values(self, luck_values, rounds): #usar los endurance_values y la info del player de cada endurance_value
-        endurance_values = [] # calcular los endurance_values: resistencia en jugadores menos 1 o 2 (excepto la primera ronda ya que se usa la resistencia original)
-        #si tiene 9 puntos de experiencia mas solo es 1 menos (verificarlo con ganador de rondas anteriores)
-        #generar los lanzamientos para todos los jugadores hasta que no tengan reistencia
-        # tambien lanzamientos de sorteo con luck_values
-        # y lanzamientos de extra para ganador individual si es necesario
-        # teniendo en cuanta la matriz montecarlo para cada genero
-        # reducir los endurance values de cada jugador en cada tiro
-        # verificar otras restricciones
-        pass
-        #1h
+    def generate_shots_and_endurance_values(self, luck_values: list[LuckValue], rounds: list[Round]):
+        shots: list[Shot] = []
+        endurance_values: list[EnduranceValue] = []
+        points_total_rd = []
+        for player in self.players:
+            endurance = self.generatePlayer_endurance(player, rounds)
+            current_endurance = endurance.value
+            # normal shots
+            pts = { "player": player, "points": 0 }
+            while current_endurance >= 5:
+                shot = self.do_shot(player, len(shots) + 1)
+                shots.append(shot)
+                current_endurance -= 5
+                player.total_points += shot.score
+                pts["points"] += shot.score
+            endurance_values.append(endurance)
+            points_total_rd.append(pts)
+        # luck shots
+        luckiest_players = [player for player in self.players if player.name == luck_values[0].player.name 
+                            or player.name == luck_values[1].player.name]
+        if len(rounds) >= 3:
+            names_list = []
+            for round in list(filter(lambda value: (len(rounds) + 1) - value.round_number <= 3, rounds)):
+                lvs = round.luck_values
+                names_list.extend([lv.player.name for lv in lvs])
+            for name in set(names_list):
+                if len(list(filter(lambda name_l: name_l == name, names_list))) == 3:
+                    luckiest_players.append(list(filter(lambda player: player.name == name, self.players))[0])
+        for player in luckiest_players:
+            shot = self.do_shot(player, len(shots) + 1, "LS")
+            shots.append(shot)
+            player.total_points += shot.score
+        # extra shots
+        max_pts = max([pts["points"] for pts in points_total_rd])
+        max_pst_list = list(filter(lambda pts: pts["points"] == max_pts, points_total_rd))
+        if len(max_pst_list) > 1:
+            while len(set([pts["points"] for pts in max_pst_list])) != len(max_pst_list):
+                for stl in max_pst_list:
+                    player = stl["player"]
+                    shot = self.do_shot(player, len(shots) + 1, "ES")
+                    shots.append(shot)
+                    player.total_points += shot.score
+                    stl["points"] += shot.score
+        return shots, endurance_values
+
+    def do_shot(self, player: Player, n_shot: int, type = "NS"):
+        num = self.get_pseudorandom_number()
+        if player.is_male:
+            score = self.calculate_score_male(num)
+        else:
+            score = self.calculate_score_female(num)
+        return Shot(player, score, n_shot, type)
+    
+    def generatePlayer_endurance(self, player: Player, rounds: list[Round]):
+        if not rounds:
+            endurance = player.original_endurance
+        else:
+            last_endurance = list(filter(lambda value:value.player.name == player.name, 
+                                            rounds[len(rounds) - 1].endurance_values))[0]
+            won_list = [round for round in rounds if round.winner_player.name == player.name]
+            if len(won_list) < 3:
+                endurance = last_endurance.value - (1 if self.get_pseudorandom_number() <= 0.5 else 2)
+            else:
+                rounds_dif = rounds[len(rounds) - 1].number - won_list[len(won_list) - 1].number
+                if rounds_dif <= 2:
+                    endurance = last_endurance.value - 1
+                else:
+                    endurance = last_endurance.value - (1 if self.get_pseudorandom_number() <= 0.5 else 2)
+        return EnduranceValue(player, endurance)
+
+    def calculate_score_male(self, score):
+        if score <= 0.2:
+            return 10
+        elif score > 0.2 and score <= 0.53:
+            return 9
+        elif score > 0.53 and score <= 0.93:
+            return 8
+        else: return 0
+        
+    def calculate_score_female(self, score):
+        if score <= 0.3:
+            return 10
+        elif score > 0.3 and score <= 0.68:
+            return 9
+        elif score > 0.68 and score <= 0.95:
+            return 8
+        else: return 0
+
     def calculate_winner(self, shots): #usar los shots
         # no tener en cuenta en jugador ganador los lanzamientos de suerte
         # no tener en cuenta en equipo ganador los lanzamientos de extra indivuales

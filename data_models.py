@@ -9,6 +9,7 @@ class Player:
         self.is_male = is_male
         self.original_endurance = original_endurance
         self.experience = experience
+        self.total_points = 0
 
 class Shot:
     def __init__(self, player, score, shot_number, type):
