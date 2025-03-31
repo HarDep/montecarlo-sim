@@ -65,8 +65,8 @@ class Model(IModel):
        if self.get_pseudorandom_number() < 0.5:
            is_male = True
        else:
-           is_male = False    
-       original_endurance = round(30 + ( (40 - 30)* self.get_pseudorandom_number()))
+           is_male = False
+       original_endurance = round(25 + ( (45 - 25)* self.get_pseudorandom_number()))
        experience = 10
        player = Player(name,team, is_male, original_endurance, experience)
        return  player
